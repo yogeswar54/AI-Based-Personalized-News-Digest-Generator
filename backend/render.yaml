@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: personalized-news-digest-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health/ready
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: APP_ENV
+        value: production
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: FRONTEND_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: DATABASE_NAME
+        value: personalized_news_digest
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: NEWS_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NEWS_SUMMARIZATION_ENABLED
+        value: "false"
+      - key: NEWS_DEDUPLICATION_ENABLED
+        value: "false"
+      - key: DIGEST_SCHEDULER_ENABLED
+        value: "false"
