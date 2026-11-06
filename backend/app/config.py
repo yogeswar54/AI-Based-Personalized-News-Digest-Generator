@@ -1,6 +1,7 @@
+import json
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -55,12 +56,34 @@ class Settings(BaseSettings):
     news_preprocessing_interval_minutes: int = Field(default=10, ge=1)
     news_collection_page_size: int = Field(default=20, ge=1, le=100)
     news_preprocessing_batch_size: int = Field(default=25, ge=1, le=200)
-    rss_feed_urls: list[str] = Field(
+    rss_feed_urls: str | list[str] = Field(
         default_factory=lambda: [
             "https://feeds.bbci.co.uk/news/rss.xml",
             "https://www.reddit.com/r/worldnews/.rss",
         ]
     )
+
+    @field_validator("rss_feed_urls", mode="before")
+    @classmethod
+    def parse_rss_feed_urls(cls, value):
+        if value is None or value == "":
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return []
+            if stripped.startswith("[") and stripped.endswith("]"):
+                try:
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [item.strip() for item in stripped.split(",") if item.strip()]
+        return value
+
     admin_secret_key: str = "development-admin-key"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = Field(
